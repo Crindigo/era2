@@ -1,0 +1,268 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Canvas Test</title>
+</head>
+<body>
+
+<div id="coords"></div>
+<div id="mcoords"></div>
+<canvas id="map" width="500" height="500" style="border: 1px solid #888;"></canvas>
+
+<script>
+    const canvas = document.getElementById('map');
+    const c = canvas.getContext('2d');
+    let dirty = true;
+
+    const map = {
+        width: 2500,
+        height: 2500,
+        objects: [],
+    };
+
+    const perRow = 50;
+    const blockSize = map.width / perRow;
+    const blockPadding = 5;
+    let hoveringIndex = -1;
+
+    for ( let i = 0; i < 2500; i++ ) {
+        const x = i % perRow;
+        const y = Math.floor(i / perRow);
+        map.objects.push({
+            type: 'rect',
+            x: x * blockSize + blockPadding,
+            y: y * blockSize + blockPadding,
+            width: blockSize - blockPadding * 2,
+            height: blockSize - blockPadding * 2,
+            //color: 'rgb(' + randInt(0, 255) + ', ' + randInt(0, 255) + ', ' + randInt(0, 255) + ')',
+            color: (x >= 23 && x <= 26 && y >= 23 && y <= 26) ? '#8899ff' : '#cccccc',
+        });
+    }
+
+    function randInt(min, max) {
+        const rng = max - min;
+        return min + parseInt(Math.random() * rng);
+    }
+
+    const viewport = {
+        x: 1000,
+        y: 1000,
+        x2: canvas.width,
+        y2: canvas.height,
+        zoom: 1.0,
+        width: canvas.width,
+        height: canvas.height
+    };
+
+    function renderObject(o, index) {
+        if ( !inViewport(o) ) {
+            return;
+        }
+
+        // if vx=0 and vy=0 and zoom=1, then we draw object at x=100, y=100, width=200, height=100
+        // if vx=30 then object is drawn at x=70
+        // if vx=30 and zoom=0.5, object is drawn at x=35, width is 100, height is 50, etc.
+        if ( o.type === 'rect' ) {
+            c.fillStyle = o.color || '#000';
+            c.fillRect(o.x, o.y, o.width, o.height);
+            if ( hoveringIndex === index ) {
+                c.lineWidth = 2;
+                c.strokeStyle = '#000';
+                c.strokeRect(o.x, o.y, o.width, o.height);
+            }
+        }
+    }
+
+    function inViewport(o) {
+        const vx = viewport.x, vy = viewport.y, vx2 = viewport.x2, vy2 = viewport.y2;
+
+        //return true;
+        if ( o.type === 'rect' ) {
+            return o.x <= vx2 || (o.x + o.width) >= vx || o.y <= vy2 || (o.y + o.height) >= vy;
+        }
+        return false;
+    }
+
+    function render()
+    {
+        // only render if things changed
+        if ( !dirty ) {
+            requestAnimationFrame(render);
+            return;
+        }
+
+        const vx = viewport.x;
+        const vy = viewport.y;
+        const zoom = viewport.zoom;
+
+        c.clearRect(0, 0, viewport.width, viewport.height);
+        c.save();
+        c.translate(-vx * zoom, -vy * zoom);
+        c.scale(zoom, zoom);
+
+        map.objects.forEach(renderObject);
+
+        c.restore();
+
+        requestAnimationFrame(render);
+
+        dirty = false;
+    }
+
+    let isDown = false;
+    let moved = false;
+    const dragStart = {x: 0, y: 0};
+    const viewportStart = {x: 0, y: 0};
+
+    canvas.addEventListener('mousedown', e => {
+        //console.log('mousedown', e.offsetX, e.offsetY);
+        isDown = true;
+        moved = false;
+        dragStart.x = e.offsetX;
+        dragStart.y = e.offsetY;
+        viewportStart.x = viewport.x;
+        viewportStart.y = viewport.y;
+    });
+
+    canvas.addEventListener('mousemove', e => {
+        const oldHoverIndex = hoveringIndex;
+        hoveringIndex = -1;
+        if ( isDown ) {
+            moved = true;
+            // if move left/up, would be negative
+            const mx = e.offsetX - dragStart.x;
+            const my = e.offsetY - dragStart.y;
+
+            // viewport x must be >= 0, and also <= map.width - viewport.width
+            viewport.x = viewportStart.x - mx / viewport.zoom;
+            viewport.y = viewportStart.y - my / viewport.zoom;
+            clampViewport();
+            dirty = true;
+        } else {
+            // convert viewport coords to map coords
+            const {x, y} = mouseToMap(e.offsetX, e.offsetY);
+            const {x: gx, y: gy} = mapToGrid(x, y);
+            if ( gx >= 0 && gy >= 0 ) {
+                hoveringIndex = gy * perRow + gx;
+                document.getElementById('mcoords').innerText = x + ', ' + y + ' (' + gx + ', ' + gy + ')';
+            } else {
+                document.getElementById('mcoords').innerText = x + ', ' + y;
+            }
+            if ( oldHoverIndex !== hoveringIndex ) {
+                dirty = true;
+            }
+        }
+    });
+
+    function mouseToMap(offsetX, offsetY) {
+        const ox = clamp(offsetX, 0, viewport.width - 1);
+        const oy = clamp(offsetY, 0, viewport.height - 1);
+        const mx = Math.floor(ox / viewport.zoom + viewport.x);
+        const my = Math.floor(oy / viewport.zoom + viewport.y);
+        return {x: mx, y: my};
+    }
+
+    function mapToGrid(x, y)
+    {
+        if ( x % 50 >= 5 && x % 50 <= 45 && y % 50 >= 5 && y % 50 <= 45 ) {
+            const gridX = Math.floor(x / perRow);
+            const gridY = Math.floor(y / perRow);
+            return {x: gridX, y: gridY};
+        } else {
+            return {x: -1, y: -1};
+        }
+    }
+
+    canvas.addEventListener('wheel', e => {
+        // scrolling up is negative
+        //console.log(e.deltaY);
+        // .0125 chosen because i can fully zoom in/out with 3 finger movements
+        // right now it's .375 per click.
+        // as you get closer to 0.1, make it 0.2. at 1.0, make it 5.5, so .375 is average.
+        // or just do 50% to 150%.
+        // this way it's not as jarring at smaller zooms.
+        const minZoom = viewport.width / map.width;
+        const multiplier = .5 + (viewport.zoom - minZoom) / (1 - minZoom);
+        const newZoom = viewport.zoom + (-e.deltaY * .0125 * multiplier);
+        const prevZoom = viewport.zoom;
+
+        // get the mouse position before we change the zoom
+        const {x: mx, y: my} = mouseToMap(e.offsetX, e.offsetY);
+
+        viewport.zoom = clamp(newZoom, minZoom, 1);
+
+        if ( viewport.zoom !== prevZoom ) {
+            // mouse-relative zoom
+            // calculate where viewport would have to be for the mouse to be in the center.
+            // say you are zoomed out to 0-2500 x 0-2500 and mouse is at 2400x2400
+            // zooming in once gets you to 0-2300 x 0-2300
+            // but we want 2400x2400 to be the center point, so instead try making the viewport (2400 - 2300/2) x (2400 + 2300/2)
+            // or 1250-3550 x 1250-3550
+            // this would clamp to 200-2500 x 200-2500
+            const newViewportWidth = viewport.width / viewport.zoom;
+            const newViewportHeight = viewport.height / viewport.zoom;
+
+            // range between 0 and 1
+            const normX = clamp(e.offsetX / viewport.width, 0, 1);
+            const normY = clamp(e.offsetY / viewport.height, 0, 1);
+            viewport.x = mx - (normX * newViewportWidth);
+            viewport.y = my - (normY * newViewportHeight);
+
+            // issue: it's making the current mouse position the new center point, but instead it should be
+            // keeping the area underneath in the same position as before.
+            // current viewport is 1000-2000 x 1000-2000 (1000 wide)
+            // we have mouse over 1300x1300
+            // new zoom is 800 wide.
+            // normalized coordinate would be 30% x 30%
+            // we want new viewport to be 1060-1860 x 1060-1860
+            // so current map coordinate minus normalized coord times new viewport size
+        }
+
+        clampViewport();
+        e.preventDefault();
+        dirty = true;
+    });
+
+    canvas.addEventListener('mouseup', e => {
+        //console.log('mouseup', e.offsetX, e.offsetY);
+        isDown = false;
+        if ( !moved ) {
+            console.log('mouseclick', e.offsetX, e.offsetY);
+        }
+    });
+
+    canvas.addEventListener('mouseout', e => {
+        //console.log('mouseout', e.offsetX, e.offsetY);
+        isDown = false;
+        hoveringIndex = -1;
+        dirty = true;
+    });
+
+    function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    function clampViewport()
+    {
+        // if zoom is 50%, right edge of the map would be at 400
+        // the min() call can become negative because of this so the max is the outer call to keep it 0.
+        // 2063, (5000 * .50) - 500
+        // at map.width=5000 and zoom=0.5, viewport.x must max out at 4000
+
+        viewport.x = clamp(viewport.x, 0, map.width - viewport.width / viewport.zoom);
+        viewport.y = clamp(viewport.y, 0, map.height - viewport.height / viewport.zoom);
+        viewport.x2 = viewport.x + viewport.width / viewport.zoom;
+        viewport.y2 = viewport.y + viewport.height / viewport.zoom;
+
+        document.getElementById('coords').innerText =
+            Math.round(viewport.x) + '-' + Math.round(viewport.x2) + ' x ' +
+            Math.round(viewport.y) + '-' + Math.round(viewport.y2) +
+            ' (zoom: ' + (Math.round(viewport.zoom * 100) / 100) + ')';
+    }
+
+    requestAnimationFrame(render);
+</script>
+
+</body>
+</html>
