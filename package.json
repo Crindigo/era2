@@ -1,42 +1,28 @@
 {
   "name": "era2",
-  "version": "0.1.0",
-  "private": true,
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/Crindigo/era2.git",
+  "author": "Steven Harris <indigo@crindigo.com>",
+  "license": "MIT",
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
-  },
-  "dependencies": {
-    "core-js": "^3.6.5",
-    "vue": "^2.6.11"
+    "watch": "webpack --watch --mode=development",
+    "build": "webpack --mode=development",
+    "release": "webpack --mode=production"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "~4.5.0",
-    "@vue/cli-plugin-eslint": "~4.5.0",
-    "@vue/cli-service": "~4.5.0",
-    "babel-eslint": "^10.1.0",
-    "eslint": "^6.7.2",
-    "eslint-plugin-vue": "^6.2.2",
-    "vue-template-compiler": "^2.6.11"
+    "@types/mithril": "^2.0.6",
+    "html-webpack-plugin": "^5.0.0-alpha.15",
+    "webpack": "^5.10.1",
+    "webpack-cli": "^4.2.0",
+    "style-loader": "^2.0.0",
+    "css-loader": "^5.0.1"
   },
-  "eslintConfig": {
-    "root": true,
-    "env": {
-      "node": true
-    },
-    "extends": [
-      "plugin:vue/essential",
-      "eslint:recommended"
-    ],
-    "parserOptions": {
-      "parser": "babel-eslint"
-    },
-    "rules": {}
-  },
-  "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not dead"
-  ]
+  "dependencies": {
+    "idb-keyval": "^3.2.0",
+    "immer": "^8.0.0",
+    "mithril": "^2.0.4",
+    "purecss": "^2.0.3",
+    "lodash": "^4.17.20"
+  }
 }

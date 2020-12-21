@@ -8,7 +8,7 @@
 
 <div id="coords"></div>
 <div id="mcoords"></div>
-<canvas id="map" width="500" height="500" style="border: 1px solid #888;"></canvas>
+<canvas id="map" width="400" height="400" style="border: 1px solid #888;"></canvas>
 
 <script>
     const canvas = document.getElementById('map');
@@ -16,17 +16,18 @@
     let dirty = true;
 
     const map = {
-        width: 2500,
-        height: 2500,
+        width: 2000,
+        height: 2000,
         objects: [],
     };
 
-    const perRow = 50;
+    const perRow = 40;
     const blockSize = map.width / perRow;
     const blockPadding = 5;
     let hoveringIndex = -1;
+    let selectedIndex = -1;
 
-    for ( let i = 0; i < 2500; i++ ) {
+    for ( let i = 0; i < 1600; i++ ) {
         const x = i % perRow;
         const y = Math.floor(i / perRow);
         map.objects.push({
@@ -36,7 +37,7 @@
             width: blockSize - blockPadding * 2,
             height: blockSize - blockPadding * 2,
             //color: 'rgb(' + randInt(0, 255) + ', ' + randInt(0, 255) + ', ' + randInt(0, 255) + ')',
-            color: (x >= 23 && x <= 26 && y >= 23 && y <= 26) ? '#8899ff' : '#cccccc',
+            color: (x >= 18 && x <= 21 && y >= 18 && y <= 21) ? '#8899ff' : '#cccccc',
         });
     }
 
@@ -46,8 +47,8 @@
     }
 
     const viewport = {
-        x: 1000,
-        y: 1000,
+        x: 800,
+        y: 800,
         x2: canvas.width,
         y2: canvas.height,
         zoom: 1.0,
@@ -66,7 +67,11 @@
         if ( o.type === 'rect' ) {
             c.fillStyle = o.color || '#000';
             c.fillRect(o.x, o.y, o.width, o.height);
-            if ( hoveringIndex === index ) {
+            if ( selectedIndex === index ) {
+                c.lineWidth = 2;
+                c.strokeStyle = '#f00';
+                c.strokeRect(o.x, o.y, o.width, o.height);
+            } else if ( hoveringIndex === index ) {
                 c.lineWidth = 2;
                 c.strokeStyle = '#000';
                 c.strokeRect(o.x, o.y, o.width, o.height);
@@ -165,9 +170,11 @@
 
     function mapToGrid(x, y)
     {
-        if ( x % 50 >= 5 && x % 50 <= 45 && y % 50 >= 5 && y % 50 <= 45 ) {
-            const gridX = Math.floor(x / perRow);
-            const gridY = Math.floor(y / perRow);
+        const p1 = blockPadding;
+        const p2 = blockSize - blockPadding;
+        if ( x % blockSize >= p1 && x % blockSize <= p2 && y % blockSize >= p1 && y % blockSize <= p2 ) {
+            const gridX = Math.floor(x / blockSize);
+            const gridY = Math.floor(y / blockSize);
             return {x: gridX, y: gridY};
         } else {
             return {x: -1, y: -1};
@@ -185,12 +192,17 @@
         const minZoom = viewport.width / map.width;
         const multiplier = .5 + (viewport.zoom - minZoom) / (1 - minZoom);
         const newZoom = viewport.zoom + (-e.deltaY * .0125 * multiplier);
-        const prevZoom = viewport.zoom;
 
         // get the mouse position before we change the zoom
-        const {x: mx, y: my} = mouseToMap(e.offsetX, e.offsetY);
+        setMapZoom(clamp(newZoom, minZoom, 1), {x: e.offsetX, y: e.offsetY});
+        e.preventDefault();
+    });
 
-        viewport.zoom = clamp(newZoom, minZoom, 1);
+    function setMapZoom(newZoom, mousePos)
+    {
+        const mapPos = mouseToMap(mousePos.x, mousePos.y);
+        const prevZoom = viewport.zoom;
+        viewport.zoom = newZoom;
 
         if ( viewport.zoom !== prevZoom ) {
             // mouse-relative zoom
@@ -204,10 +216,10 @@
             const newViewportHeight = viewport.height / viewport.zoom;
 
             // range between 0 and 1
-            const normX = clamp(e.offsetX / viewport.width, 0, 1);
-            const normY = clamp(e.offsetY / viewport.height, 0, 1);
-            viewport.x = mx - (normX * newViewportWidth);
-            viewport.y = my - (normY * newViewportHeight);
+            const normX = clamp(mousePos.x / viewport.width, 0, 1);
+            const normY = clamp(mousePos.y / viewport.height, 0, 1);
+            viewport.x = mapPos.x - (normX * newViewportWidth);
+            viewport.y = mapPos.y - (normY * newViewportHeight);
 
             // issue: it's making the current mouse position the new center point, but instead it should be
             // keeping the area underneath in the same position as before.
@@ -220,7 +232,16 @@
         }
 
         clampViewport();
-        e.preventDefault();
+        dirty = true;
+    }
+
+    canvas.addEventListener('dblclick', e => {
+        setMapZoom(1.0, {x: e.offsetX, y: e.offsetY});
+        // if you click on map position 1000,1000 then viewport x would be 1000 - width/2, etc.
+        const {x, y} = mouseToMap(e.offsetX, e.offsetY);
+        viewport.x = x - viewport.width / 2;
+        viewport.y = y - viewport.height / 2;
+        clampViewport();
         dirty = true;
     });
 
@@ -229,6 +250,19 @@
         isDown = false;
         if ( !moved ) {
             console.log('mouseclick', e.offsetX, e.offsetY);
+            const oldSelectedIndex = selectedIndex;
+            // convert viewport coords to map coords
+            const {x, y} = mouseToMap(e.offsetX, e.offsetY);
+            const {x: gx, y: gy} = mapToGrid(x, y);
+            if ( gx >= 0 && gy >= 0 ) {
+                selectedIndex = gy * perRow + gx;
+            } else {
+                selectedIndex = -1;
+            }
+            console.log('selectedIndex=', selectedIndex);
+            if ( oldSelectedIndex !== selectedIndex ) {
+                dirty = true;
+            }
         }
     });
 
