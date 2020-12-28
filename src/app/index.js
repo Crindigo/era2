@@ -3,6 +3,11 @@ import './../assets/style.css';
 import m from 'mithril';
 import { Client } from './client';
 import { cloneDeep } from 'lodash';
+import {TownCenterUI} from "./model/city-ui";
+
+// ENDGAME NOTE?
+// Craft a variety of random things, ship them on rockets to aliens for SpaceCash.
+// Random set of requests/rewards generated daily?
 
 (async function() {
     const client = new Client();
@@ -21,8 +26,10 @@ import { cloneDeep } from 'lodash';
 
 const ViewModel = {
     cities: [
-        {id: 1, name: 'Home Town', citizens: [1, 2, 3], landUsed: 0, populationCap: 10},
-        {id: 2, name: 'Second Town', citizens: [1, 2, 3, 4, 5, 6, 7], landUsed: 5, populationCap: 15},
+        {id: 1, name: 'Home Town', citizens: [1, 2, 3], transports: [1, 2], landUsed: 0, landAvailable: 10,
+            landTotal: 90, populationCap: 10},
+        {id: 2, name: 'Second Town', citizens: [1, 2, 3, 4, 5, 6, 7], transports: [2, 3], landUsed: 5,
+            landAvailable: 15, landTotal: 105, populationCap: 15},
     ],
     currentCity: {
         id: 1,
@@ -35,10 +42,15 @@ const ViewModel = {
             {"id": "granite", "name": "granite", "qty": 5},
             {"id": "limestone", "name": "limestone", "qty": 10},
         ],
-        buildings: [],
+        buildings: [
+            {"id": "asfasf", "name": "Town Center", "type": new TownCenterUI()},
+        ],
         citizens: [],
+        transports: [],
         populationCap: 10,
     },
+    currentBuilding: null,
+    currentCitizen: null,
 };
 
 ViewModel.cities[0].inventory = cloneDeep(ViewModel.currentCity.inventory);
@@ -61,24 +73,25 @@ class LeftSideComponent {
             m('.tablist', [
                 m('.tab' + (ab === 'inventory' ? '.tab-active' : ''), {
                     onclick: () => this.activeButton = 'inventory'
-                }, 'Inventory'),
+                }, 'Storage'),
                 m('.tab' + (ab === 'cities' ? '.tab-active' : ''), {
                     onclick: () => this.activeButton = 'cities',
                     hidden: ViewModel.cities.length <= 1
-                }, 'Cities'),
+                }, 'World'),
             ]),
-            this.activeButton === 'inventory' ? m(InventoryComponent) : m(CitiesComponent),
+            this.activeButton === 'inventory' ? this.inventoryView() : this.citiesView(),
         ]);
     }
-}
 
-class InventoryComponent {
-    constructor(vnode) {
+    inventoryView() {
+        return m('.inventory', ViewModel.currentCity.inventory.map(it => {
+            return m(ItemComponent, {key: it.id, item: it});
+        }));
     }
 
-    view() {
-        return m('.inventory', ViewModel.currentCity.inventory.map(it => {
-            return m(ItemComponent, {item: it});
+    citiesView() {
+        return m('.cities', ViewModel.cities.map(it => {
+            return m(CityComponent, {key: it.id, city: it});
         }));
     }
 }
@@ -93,17 +106,6 @@ class ItemComponent {
             this.item.name,
             m('span.qty', this.item.qty),
         ]);
-    }
-}
-
-class CitiesComponent {
-    constructor(vnode) {
-    }
-
-    view() {
-        return m('.cities', ViewModel.cities.map(it => {
-            return m(CityComponent, {city: it});
-        }));
     }
 }
 
@@ -135,16 +137,21 @@ class CenterComponent {
 
         return m('.center.pure-u-11-24', [
             m('.tablist', [
-                m('.tabtitle', ViewModel.currentCity.name + ':'),
+                m('.tabtitle', cc.name),
                 m('.tab' + (ab === 'buildings' ? '.tab-active' : ''), {
                     onclick: () => this.activeButton = 'buildings',
                     title: `Land Used: ${cc.landUsed}\nLand Available: ${cc.landAvailable}\nTotal Land: ${cc.landTotal}`
-                }, `Buildings (${cc.landUsed}/${cc.landAvailable}/${cc.landTotal})`),
+                }, `City (${cc.landUsed}/${cc.landAvailable}/${cc.landTotal})`),
                 m('.tab' + (ab === 'citizens' ? '.tab-active' : ''), {
                     onclick: () => this.activeButton = 'citizens',
-                    hidden: ViewModel.currentCity.citizens.length === 0,
+                    hidden: cc.citizens.length === 0,
                     title: `Citizens: ${cc.citizens.length}\nMax Population: ${cc.populationCap}`
-                }, `Citizens (${cc.citizens.length}/${cc.populationCap})`)
+                }, `Pop (${cc.citizens.length}/${cc.populationCap})`),
+                m('.tab' + (ab === 'transport' ? '.tab-active' : ''), {
+                    onclick: () => this.activeButton = 'transport',
+                    hidden: cc.transports.length === 0,
+                    title: `Incoming: ${cc.transports.length}\nOutgoing: ${cc.transports.length}`
+                }, `Trade (${cc.transports.length}/${cc.transports.length})`)
             ])
         ]);
     }
@@ -157,7 +164,19 @@ class RightSideComponent {
     constructor(vnode) {
     }
     view() {
-        return m('.right.pure-u-1-3', 'Right side');
+        const msg = ViewModel.currentCity.citizens.length > 0 ? 'building or citizen' : 'building';
+        let children = [m('.building-empty', 'Select a ' + msg + ' for more options.')];
+        if ( ViewModel.currentBuilding ) {
+            const b = ViewModel.currentBuilding;
+            const bType = b.type;
+            children = [
+                m('h4', b.name),
+
+            ];
+        } else if ( ViewModel.currentCitizen ) {
+
+        }
+        return m('.right.pure-u-1-3', children);
     }
 }
 
