@@ -13,6 +13,20 @@ html, button, input, select, textarea, .pure-g [class *= "pure-u"] {
     margin-bottom: 3px;
 }
 
+.button {
+    border: 1px solid #333;
+    padding: 6px;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+}
+.button:hover {
+    box-shadow: 0 0 3px #000;
+}
+.button:active {
+    box-shadow: 0 0 1px #000;
+}
+
 .tablist {
     margin-bottom: 10px;
 }
@@ -74,9 +88,27 @@ html, button, input, select, textarea, .pure-g [class *= "pure-u"] {
     text-align: center;
 }
 
-.right h4 {
+.right h3 {
     font-weight: bold;
     font-size: 16px;
-    padding: 2px;
+    margin: 6px 0;
+}
+
+.right h4 {
     margin: 4px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.right .upgrade-list {
+    border-top: 1px solid #666;
+    padding: 6px;
+    margin-right: 6px;
+    text-align: center;
+}
+
+.right .upgrade {
+    width: 80%;
+    margin: 8px auto;
+    user-select: none;
 }

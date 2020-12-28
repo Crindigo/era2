@@ -170,9 +170,18 @@ class RightSideComponent {
             const b = ViewModel.currentBuilding;
             const bType = b.type;
             children = [
-                m('h4', b.name),
-
+                m('h3', b.name),
             ];
+
+            if ( bType.upgrades.length ) {
+                children.push(m('.upgrade-list',
+                    [m('h4', 'Available Upgrades')].concat(
+                        bType.upgrades.map(u => {
+                            return m('.upgrade.button', u.name);
+                        })
+                    )
+                ));
+            }
         } else if ( ViewModel.currentCitizen ) {
 
         }

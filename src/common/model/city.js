@@ -43,7 +43,7 @@ export class BuildingClass
             data: {}
             // possible data subkeys:
             // upgrades - array of string upgrade ids on the building
-            //
+            // citizens - array of citizen ids assigned to building
         };
     }
 }
@@ -65,12 +65,15 @@ export class TownCenter extends BuildingClass
 
 export class Upgrade
 {
-    constructor(id, name, costs = []) {
+    constructor(id, name, requiredResearch = [], itemCosts = {}) {
         // thinking upgrades should not have logic in themselves, more like buildings will detect what upgrades
         // have been added and adjust their tick code accordingly.
         this.id = id;
         this.name = name;
+        this.requiredResearch = requiredResearch;
+        this.itemCosts = itemCosts;
 
-        this.costs = costs; // items, research
+        //this.requiredResearch = ['axes', 'stone_tools'];
+        //this.itemCosts = {"flint": 10, "stick": 5};
     }
 }
