@@ -173,11 +173,17 @@ class RightSideComponent {
                 m('h3', b.name),
             ];
 
-            if ( bType.upgrades.length ) {
+            const availableUpgrades = bType.upgrades.filter(u => {
+                return !b.upgrades.includes(u.id);
+            });
+
+            if ( availableUpgrades ) {
                 children.push(m('.upgrade-list',
                     [m('h4', 'Available Upgrades')].concat(
-                        bType.upgrades.map(u => {
-                            return m('.upgrade.button', u.name);
+                        availableUpgrades.map(u => {
+                            return m('.upgrade.button', {
+                                onclick: () => this.upgradeClicked(b, u),
+                            }, u.name);
                         })
                     )
                 ));
@@ -186,6 +192,10 @@ class RightSideComponent {
 
         }
         return m('.right.pure-u-1-3', children);
+    }
+
+    upgradeClicked(building, upgrade) {
+
     }
 }
 
