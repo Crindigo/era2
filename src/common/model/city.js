@@ -12,40 +12,40 @@
  */
 export class BuildingClass
 {
-    constructor() {
-        // Each building has a list of upgrades that can be applied to it. The upgrades can be locked
-        // behind research, and have unlock costs attached.
-        this.upgrades = [];
+  constructor() {
+    // Each building has a list of upgrades that can be applied to it. The upgrades can be locked
+    // behind research, and have unlock costs attached.
+    this.upgrades = [];
 
-        // Buildings can have operators that manage it and automatically process work.
-        this.maxOperators = 0;
+    // Buildings can have operators that manage it and automatically process work.
+    this.maxOperators = 0;
 
-        // How much land this building requires.
-        this.landUsage = 1;
+    // How much land this building requires.
+    this.landUsage = 1;
 
-        // How much this building adds to max population. In Town Center, can enable/disable pop growth.
-        this.populationExpansion = 0;
+    // How much this building adds to max population. In Town Center, can enable/disable pop growth.
+    this.populationExpansion = 0;
 
-        // Buildings can also store arbitrary data, like a farm storing its crops, fertilizer, irrigation status.
-        // a FarmClass class could have a method for creating default farms, with those properties in it.
+    // Buildings can also store arbitrary data, like a farm storing its crops, fertilizer, irrigation status.
+    // a FarmClass class could have a method for creating default farms, with those properties in it.
 
-        // UI might be tricky. Rendering upgrade buttons and citizen select boxes could be standard at least.
-        // Use mithril.js, can create html with code.
+    // UI might be tricky. Rendering upgrade buttons and citizen select boxes could be standard at least.
+    // Use mithril.js, can create html with code.
 
-        // Jotting down housing note. Want to have assigned housing somehow, with the ability to upgrade houses
-        // which apply bonuses to people living there.
-    }
+    // Jotting down housing note. Want to have assigned housing somehow, with the ability to upgrade houses
+    // which apply bonuses to people living there.
+  }
 
-    factory() {
-        return {
-            type: this,
-            name: '',
-            data: {}
-            // possible data subkeys:
-            // upgrades - array of string upgrade ids on the building
-            // citizens - array of citizen ids assigned to building
-        };
-    }
+  factory() {
+    return {
+      type: this,
+      name: '',
+      data: {}
+      // possible data subkeys:
+      // upgrades - array of string upgrade ids on the building
+      // citizens - array of citizen ids assigned to building
+    };
+  }
 }
 
 /**
@@ -54,26 +54,26 @@ export class BuildingClass
  */
 export class TownCenter extends BuildingClass
 {
-    constructor(props) {
-        super(props);
-        this.name = 'TownCenter';
+  constructor(props) {
+    super(props);
+    this.name = 'TownCenter';
 
-        this.upgrades.push(new Upgrade('woodcutting', 'Woodcutting'));
-        this.upgrades.push(new Upgrade('mining', 'Mining'));
-    }
+    this.upgrades.push(new Upgrade('woodcutting', 'Woodcutting'));
+    this.upgrades.push(new Upgrade('mining', 'Mining'));
+  }
 }
 
 export class Upgrade
 {
-    constructor(id, name, requiredResearch = [], itemCosts = {}) {
-        // thinking upgrades should not have logic in themselves, more like buildings will detect what upgrades
-        // have been added and adjust their tick code accordingly.
-        this.id = id;
-        this.name = name;
-        this.requiredResearch = requiredResearch;
-        this.itemCosts = itemCosts;
+  constructor(id, name, requiredResearch = [], itemCosts = {}) {
+    // thinking upgrades should not have logic in themselves, more like buildings will detect what upgrades
+    // have been added and adjust their tick code accordingly.
+    this.id = id;
+    this.name = name;
+    this.requiredResearch = requiredResearch;
+    this.itemCosts = itemCosts;
 
-        //this.requiredResearch = ['axes', 'stone_tools'];
-        //this.itemCosts = {"flint": 10, "stick": 5};
-    }
+    //this.requiredResearch = ['axes', 'stone_tools'];
+    //this.itemCosts = {"flint": 10, "stick": 5};
+  }
 }

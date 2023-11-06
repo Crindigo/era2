@@ -2,37 +2,31 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 
 let config = {
-    mode: 'development',
-    //mode: 'production',
-    entry: './src/app/index.js',
-    output: {
-        filename: 'app.bundle.js',
-        path: path.resolve(__dirname, 'dist')
-    },
-    plugins: [
-        new HtmlWebpackPlugin({
-            title: 'Era',
-            template: 'public/index.html',
-        })
-    ],
-    module: {
-        rules: [
-            {
-                test: /\.css$/,
-                use: ['style-loader', 'css-loader']
-            }
-        ]
-    },
-
-    resolve: {
-        alias: {
-            'vue$': 'vue/dist/vue.esm-bundler.js'
-        }
-    }
+  mode: 'development',
+  //mode: 'production',
+  entry: './src/app/index.js',
+  output: {
+    filename: 'app.bundle.js',
+    path: path.resolve(__dirname, 'dist')
+  },
+  plugins: [
+    new HtmlWebpackPlugin({
+      title: 'Era',
+      template: 'public/index.html',
+    })
+  ],
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader']
+      }
+    ]
+  },
 };
 
 module.exports = (env, argv) => {
-    return config;
+  return config;
 };
 
 /*
